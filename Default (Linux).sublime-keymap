@@ -1,0 +1,8 @@
+[
+	{ "keys": ["alt+shift+up"], "command": "column_select", "args": {"by": "lines", "forward": false}},
+	{ "keys": ["alt+shift+down"], "command": "column_select", "args": {"by": "lines", "forward": true}},
+	{ "keys": ["alt+shift+pageup"], "command": "column_select", "args": {"by": "pages", "forward": false}},
+	{ "keys": ["alt+shift+pagedown"], "command": "column_select", "args": {"by": "pages", "forward": true}},
+	{ "keys": ["alt+shift+home"], "command": "column_select", "args": {"by": "all", "forward": false}},
+	{ "keys": ["alt+shift+end"], "command": "column_select", "args": {"by": "all", "forward": true}}
+]
