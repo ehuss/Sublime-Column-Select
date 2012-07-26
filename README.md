@@ -20,6 +20,8 @@ Windows:
 - Ctrl-Alt-Home: Up until the beginning of the document.
 - Ctrl-Alt-End: Down until the end of the document.
 
+- Ctrl-Alt-Right-click: Select current column in all lines from the cursor to the row where you clicked.
+
 Linux:
 
 - Alt-Shift-Up / Ctrl-Alt-Down: Up/down one line.
@@ -27,12 +29,17 @@ Linux:
 - Alt-Shift-Home: Up until the beginning of the document.
 - Alt-Shift-End: Down until the end of the document.
 
+- Ctrl-Alt-Right-click: Select current column in all lines from the cursor to the row where you clicked.
+
 OS X:
 
 - Ctrl-Shift-Up / Ctrl-Alt-Down: Up/down one line.
 - Ctrl-Shift-PageUp / Ctrl-Alt-PageDown: Up/down one page.
 - Ctrl-Shift-Home: Up until the beginning of the document.
 - Ctrl-Shift-End: Down until the end of the document.
+
+- Ctrl-Shift-Right-click: Select current column in all lines from the cursor to the row where you clicked.
+
 
 If you want to use a different keystroke, go to "Preferences" then "Key Bindings - User", and add an entry like this:
 

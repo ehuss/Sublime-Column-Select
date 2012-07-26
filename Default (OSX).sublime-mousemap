@@ -1,0 +1,7 @@
+[
+	{
+		"button": "button2", "count": 1, "modifiers": ["ctrl", "shift"],
+		"press_command": "column_select",
+		"press_args": {"by": "mouse"}
+	}
+]

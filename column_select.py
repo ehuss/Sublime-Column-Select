@@ -1,6 +1,11 @@
 import sys
 import sublime, sublime_plugin
 
+# Notes:
+# - Would prefer that after going down, pressing up would undo the last down,
+#   not extend the selection from the top.  However, there's no simple way
+#   that I can think of to determine which direction the last move was.
+
 class ColumnSelect(sublime_plugin.TextCommand):
 
     def all_selections_at_end(self, sel):
@@ -14,7 +19,19 @@ class ColumnSelect(sublime_plugin.TextCommand):
                 break
         return at_end
 
-    def run(self, edit, by, forward):
+    def run_(self, args):
+        if 'event' in args:
+            event = args['event']
+            del args['event']
+        else:
+            event = None
+        edit = self.view.begin_edit(self.name(), args)
+        try:
+            self.run(edit=edit, event=event, **args)
+        finally:
+            self.view.end_edit(edit)
+
+    def run(self, edit=None, by='lines', forward=True, event=None):
         all_sel = self.view.sel()
 
         # Whether or not to ignore lines that are too short in the line count.
@@ -30,6 +47,30 @@ class ColumnSelect(sublime_plugin.TextCommand):
             ignore_too_short = False
         elif by == 'all':
             num_lines = sys.maxint
+        elif by == 'mouse':
+            orig_sel = [s for s in all_sel]
+            self.view.run_command('drag_select', {'event': event})
+            all_sel = self.view.sel()
+            click_point = all_sel[0].a
+            all_sel.clear()
+            map(all_sel.add, orig_sel)
+
+            if click_point < all_sel[0].begin():
+                forward = False
+                relative = all_sel[0].begin()
+            else:
+                forward = True
+                relative = all_sel[-1].end()
+            crow, ccol = self.view.rowcol(click_point)
+            rrow, rcol = self.view.rowcol(relative)
+
+            if forward:
+                if crow <= rrow: return
+                num_lines = crow - rrow
+            else:
+                if crow >= rrow: return
+                num_lines = rrow - crow
+            ignore_too_short = False
         else:
             sublime.error_message('Invalid "by" argument.')
             return
