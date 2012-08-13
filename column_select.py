@@ -82,7 +82,7 @@ class ColumnSelect(sublime_plugin.TextCommand):
         else:
             sp = all_sel[0].begin()
         current_line = self.view.line(sp)
-        sp_column = sp - current_line.begin()
+        sp_column = self._column_from_pt(sp)
         # Cound of selections made.
         sel_count = 0
         # Count of lines traversed.  Lines too short are not counted unless
@@ -108,9 +108,9 @@ class ColumnSelect(sublime_plugin.TextCommand):
             if all_at_end:
                 sel_pos = next_line.end()
             else:
-                if next_line.size() >= sp_column:
+                if self._line_size(next_line) >= sp_column:
                     # A good line.
-                    sel_pos = next_line.begin()+sp_column
+                    sel_pos = self._pt_from_column(sp_column, next_line.begin())
                 else:
                     # Line too short.
                     sel_pos = None
@@ -128,3 +128,37 @@ class ColumnSelect(sublime_plugin.TextCommand):
         if last_sel != None:
             self.view.show(last_sel)
 
+    def _column_from_pt(self, pt):
+        # From indentation.py.
+        tab_size = self._tab_size()
+        col = 0
+        ln = self.view.line(pt)
+        for lpt in xrange(ln.begin(), pt):
+            ch = self.view.substr(lpt)
+            if ch == '\t':
+                col += tab_size - (col % tab_size)
+            else:
+                col += 1
+        return col
+
+    def _pt_from_column(self, desired_col, line_pt):
+        tab_size = self._tab_size()
+        col = 0
+        ln = self.view.line(line_pt)
+        for lpt in xrange(ln.begin(), ln.end()):
+            if col >= desired_col:
+                break
+            ch = self.view.substr(lpt)
+            if ch == '\t':
+                col += tab_size - (col % tab_size)
+            else:
+                col += 1
+        else:
+            return lpt+1
+        return lpt
+
+    def _line_size(self, line):
+        return self._column_from_pt(line.end())
+
+    def _tab_size(self):
+        return int(self.view.settings().get('tab_size', 8))
