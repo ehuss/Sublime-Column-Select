@@ -8,16 +8,36 @@ import sublime, sublime_plugin
 
 class ColumnSelect(sublime_plugin.TextCommand):
 
-    def all_selections_at_end(self, sel):
-        at_end = True
+    def all_selections_at_begin_end(self, sel):
+        at_begin_end = None
         for i, s in enumerate(sel):
             # Don't bother looking at more than a thousand lines.
             if i > 1000:
                 break
-            if s.end() != self.view.line(s.end()).end():
-                at_end = False
-                break
-        return at_end
+
+            if at_begin_end == 'BEGIN':
+                if s.begin() == self.view.line(s.begin()).begin():
+                    pass
+                elif s.end() == self.view.line(s.end()).end():
+                    at_begin_end = 'END'
+                else:
+                    return None
+
+            elif at_begin_end == 'END':
+                if s.end() == self.view.line(s.end()).end():
+                    pass
+                else:
+                    return None
+
+            else:
+                # None
+                if s.begin() == self.view.line(s.begin()).begin():
+                    at_begin_end = 'BEGIN'
+                elif s.end() == self.view.line(s.end()).end():
+                    at_begin_end = 'END'
+                else:
+                    break
+        return at_begin_end
 
     def run_(self, args):
         if 'event' in args:
@@ -75,7 +95,7 @@ class ColumnSelect(sublime_plugin.TextCommand):
             sublime.error_message('Invalid "by" argument.')
             return
 
-        all_at_end = self.all_selections_at_end(all_sel)
+        all_begin_end = self.all_selections_at_begin_end(all_sel)
 
         if forward:
             sp = all_sel[-1].end()
@@ -105,7 +125,9 @@ class ColumnSelect(sublime_plugin.TextCommand):
                     # Beginning of view.
                     break
                 next_line = self.view.line(current_line.begin()-1)
-            if all_at_end:
+            if all_begin_end == 'BEGIN':
+                sel_pos = next_line.begin()
+            elif all_begin_end == 'END':
                 sel_pos = next_line.end()
             else:
                 if self._line_size(next_line) >= sp_column:
