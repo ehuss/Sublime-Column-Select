@@ -39,13 +39,13 @@ class ColumnSelect(sublime_plugin.TextCommand):
                     break
         return at_begin_end
 
-    def run_(self, args):
+    def run_(self, edit_token, args):
         if 'event' in args:
             event = args['event']
             del args['event']
         else:
             event = None
-        edit = self.view.begin_edit(self.name(), args)
+        edit = self.view.begin_edit(edit_token, self.name(), args)
         try:
             self.run(edit=edit, event=event, **args)
         finally:
@@ -66,21 +66,24 @@ class ColumnSelect(sublime_plugin.TextCommand):
             num_lines = len(lines)
             ignore_too_short = False
         elif by == 'all':
-            num_lines = sys.maxint
+            num_lines = 2147483647
         elif by == 'mouse':
             orig_sel = [s for s in all_sel]
+            print('orig=%r' % orig_sel)
             self.view.run_command('drag_select', {'event': event})
             all_sel = self.view.sel()
+            print('new all_sel=%r' % all_sel)
             click_point = all_sel[0].a
             all_sel.clear()
-            map(all_sel.add, orig_sel)
+            for s in orig_sel:
+                all_sel.add(s)
 
             if click_point < all_sel[0].begin():
                 forward = False
                 relative = all_sel[0].begin()
             else:
                 forward = True
-                relative = all_sel[-1].end()
+                relative = all_sel[len(all_sel)-1].end()
             crow, ccol = self.view.rowcol(click_point)
             rrow, rcol = self.view.rowcol(relative)
 
@@ -98,7 +101,7 @@ class ColumnSelect(sublime_plugin.TextCommand):
         all_begin_end = self.all_selections_at_begin_end(all_sel)
 
         if forward:
-            sp = all_sel[-1].end()
+            sp = all_sel[len(all_sel)-1].end()
         else:
             sp = all_sel[0].begin()
         current_line = self.view.line(sp)
@@ -155,7 +158,7 @@ class ColumnSelect(sublime_plugin.TextCommand):
         tab_size = self._tab_size()
         col = 0
         ln = self.view.line(pt)
-        for lpt in xrange(ln.begin(), pt):
+        for lpt in range(ln.begin(), pt):
             ch = self.view.substr(lpt)
             if ch == '\t':
                 col += tab_size - (col % tab_size)
@@ -167,7 +170,7 @@ class ColumnSelect(sublime_plugin.TextCommand):
         tab_size = self._tab_size()
         col = 0
         ln = self.view.line(line_pt)
-        for lpt in xrange(ln.begin(), ln.end()):
+        for lpt in range(ln.begin(), ln.end()):
             if col >= desired_col:
                 break
             ch = self.view.substr(lpt)
