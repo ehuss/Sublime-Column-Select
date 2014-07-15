@@ -1,14 +1,16 @@
-import sys
 import sublime, sublime_plugin
 
-# Notes:
-# - Would prefer that after going down, pressing up would undo the last down,
-#   not extend the selection from the top.  However, there's no simple way
-#   that I can think of to determine which direction the last move was.
+view_directions = {}
+
 
 class ColumnSelect(sublime_plugin.TextCommand):
 
     def all_selections_at_begin_end(self, sel):
+        """Determines if all selections are at the beginning or end of lines.
+
+        :Returns: 'BEGIN' if all selections are at the beginning of a line.
+        'END' if they are all at the end.  None otherwise.
+        """
         at_begin_end = None
         for i, s in enumerate(sel):
             # Don't bother looking at more than a thousand lines.
@@ -39,6 +41,22 @@ class ColumnSelect(sublime_plugin.TextCommand):
                     break
         return at_begin_end
 
+    def should_undo(self, sel, forward):
+        """Determines if it should undo the last motion.
+
+        :Returns: True if it should shrink the selection.
+        """
+        # This mostly works, since it is relatively safe to assume the motion
+        # starts from a single region.  This might not always work as
+        # expected, for example after a "find all".
+        last_motion = view_directions.get(self.view.id())
+        if ((last_motion == 'UP' and forward) or
+            (last_motion == 'DOWN' and not forward)
+           ):
+            if len(sel) > 1:
+                return True
+        return False
+
     def run_(self, edit_token, args):
         if 'event' in args:
             event = args['event']
@@ -53,10 +71,17 @@ class ColumnSelect(sublime_plugin.TextCommand):
 
     def run(self, edit=None, by='lines', forward=True, event=None):
         all_sel = self.view.sel()
+        if len(all_sel) == 1 and self.view.id() in view_directions:
+            # Reset when first starting.
+            del view_directions[self.view.id()]
 
         # Whether or not to ignore lines that are too short in the line count.
-        ignore_too_short = True
-        # How far to go?
+        # I particularly want PgUp/PgDn to always be 1 screenfull.
+        ignore_too_short = by in ('lines', 'all')
+
+        # Yes, this is a little messy.
+        # How far to go?  This computes num_lines.
+        # Mouse movement may change `all_sel` and `forward`.
         if by == 'lines':
             num_lines = 1
         elif by == 'pages':
@@ -64,38 +89,81 @@ class ColumnSelect(sublime_plugin.TextCommand):
             vr = self.view.visible_region()
             lines = self.view.lines(vr)
             num_lines = len(lines)
-            ignore_too_short = False
         elif by == 'all':
             num_lines = 2147483647
         elif by == 'mouse':
             orig_sel = [s for s in all_sel]
-            print('orig=%r' % orig_sel)
+            # Determine where the mouse click was.
             self.view.run_command('drag_select', {'event': event})
             all_sel = self.view.sel()
-            print('new all_sel=%r' % all_sel)
             click_point = all_sel[0].a
-            all_sel.clear()
-            for s in orig_sel:
-                all_sel.add(s)
+            # Delay restoring the selection.  I'm running into a weird bug.
+            # After calling rowcol(), if you do not change the length of the
+            # selection, sublime gets into a wonky state.
 
-            if click_point < all_sel[0].begin():
+            # `relative` is the point from which the selection should grow.
+            if click_point < orig_sel[0].begin():
                 forward = False
-                relative = all_sel[0].begin()
-            else:
+                relative = orig_sel[0].begin()
+                # Prevent undo.
+                view_directions.pop(self.view.id(), None)
+            elif click_point > orig_sel[-1].end():
                 forward = True
-                relative = all_sel[len(all_sel)-1].end()
+                relative = orig_sel[-1].end()
+                # Prevent undo.
+                view_directions.pop(self.view.id(), None)
+            else:
+                # Clicked within a line of the existing regions.
+                last_motion = view_directions.get(self.view.id())
+                # Allow undo if possible.
+                if last_motion == 'UP':
+                    forward = True
+                    relative = orig_sel[0].begin()
+                elif last_motion == 'DOWN':
+                    forward = False
+                    relative = orig_sel[-1].end()
+                else:
+                    # No last motion, abort.
+                    return
             crow, ccol = self.view.rowcol(click_point)
             rrow, rcol = self.view.rowcol(relative)
 
             if forward:
-                if crow <= rrow: return
                 num_lines = crow - rrow
             else:
-                if crow >= rrow: return
                 num_lines = rrow - crow
-            ignore_too_short = False
+
+            if num_lines == 0:
+                # Clicked on the same line as the current selection.
+                # Unfortunately due to an issue in sublime, I can't seem to
+                # get it to work properly if I restore the original selection
+                # (as long as the length of the selection doesn't change, it
+                # gets confused).
+                return
+
+            # Restore selection after running drag_select.
+            all_sel.clear()
+            for r in orig_sel:
+                all_sel.add(r)
         else:
             sublime.error_message('Invalid "by" argument.')
+            return
+
+        if self.should_undo(all_sel, forward):
+            # Remove the appropriate regions from the selection.
+            sels = [s for s in all_sel]
+            num_to_remove = min(num_lines, len(all_sel)-1)
+            if forward:
+                sels = sels[:num_to_remove]
+            else:
+                sels = sels[-num_to_remove:]
+            for s in sels:
+                all_sel.subtract(s)
+            if forward:
+                self.view.show(all_sel[0])
+            else:
+                self.view.show(all_sel[-1])
+            # Importantly, this does not update view_directions.
             return
 
         all_begin_end = self.all_selections_at_begin_end(all_sel)
@@ -106,7 +174,7 @@ class ColumnSelect(sublime_plugin.TextCommand):
             sp = all_sel[0].begin()
         current_line = self.view.line(sp)
         sp_column = self._column_from_pt(sp)
-        # Cound of selections made.
+        # Count of selections made.
         sel_count = 0
         # Count of lines traversed.  Lines too short are not counted unless
         # ignore_too_short is False.
@@ -152,6 +220,11 @@ class ColumnSelect(sublime_plugin.TextCommand):
 
         if last_sel != None:
             self.view.show(last_sel)
+
+        if forward:
+            view_directions[self.view.id()] = 'DOWN'
+        else:
+            view_directions[self.view.id()] = 'UP'
 
     def _column_from_pt(self, pt):
         # From indentation.py.
