@@ -8,8 +8,8 @@ Downloading
 The best way to download and install Sublime Column Select is to use the Package Control plugin.  If you do not already have it installed, it's really the best way to manage your packages.
 
 For users new to the package manager:
-* Go to http://wbond.net/sublime_packages/package_control and install Package Control.
-* Restart Sublime Text 2.
+* Go to https://packagecontrol.io/installation and install Package Control.
+* Restart Sublime Text.
 
 Install Sublime Column Select:
 * Bring up the Command Palette (`Command+Shift+P` on OS X, `Control+Shift+P` on Linux/Windows).
