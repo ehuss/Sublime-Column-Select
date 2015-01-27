@@ -57,15 +57,24 @@ class ColumnSelect(sublime_plugin.TextCommand):
                 return True
         return False
 
-    def run_(self, edit_token, args):
-        if 'event' in args:
-            event = args['event']
-            del args['event']
+    def run_(self, *args):
+        if len(args) == 1:
+            # Sublime 2
+            kwargs = args[0]
+            edit = self.view.begin_edit(self.name(), kwargs)
+        else:
+            # Sublime 3
+            edit_token, kwargs = args
+            edit = self.view.begin_edit(edit_token, self.name(), kwargs)
+
+        if 'event' in kwargs:
+            event = kwargs['event']
+            del kwargs['event']
         else:
             event = None
-        edit = self.view.begin_edit(edit_token, self.name(), args)
+
         try:
-            self.run(edit=edit, event=event, **args)
+            self.run(edit=edit, event=event, **kwargs)
         finally:
             self.view.end_edit(edit)
 
