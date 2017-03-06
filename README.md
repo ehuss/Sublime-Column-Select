@@ -26,6 +26,12 @@ and place it in your packages directory.
 
 Configuring
 -----------
+
+For this plugin:
+
++ “Page” — visible part of open file.
++ “Document” — all open file.
+
 No need to configure anything.  By default it uses the default keystroke for column selection, plus a few extras.  These keystrokes will select the same column in the next or previous line, page, or until the beginning/end of the document.
 
 Windows:
