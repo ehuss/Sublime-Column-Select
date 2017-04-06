@@ -1,10 +1,15 @@
-Sublime Column Select
-=====================
+# Sublime Column Select
 
-This plugin provides an alternate behavior for Sublime keyboard column selection.  I often found it challenging to select columns with lines that were shorter than the rest.
+This plugin provides an alternate behavior for Sublime keyboard column selection.  The differences are:
 
-Downloading
------------
+* Allows reversing direction (go down too far, just go back up).
+* Added PageUp/PageDown, Home/End, and mouse selection.
+* Skip rows that are too short.
+* If you start at the end of a line, then it will stay at the end of each line.
+
+![example](demo1.gif)
+
+## Installing
 The best way to download and install Sublime Column Select is to use the Package Control plugin.  If you do not already have it installed, it's really the best way to manage your packages.
 
 For users new to the package manager:
@@ -24,37 +29,20 @@ Alternatively, you can fetch from github:
 
 and place it in your packages directory.
 
-Configuring
------------
-No need to configure anything.  By default it uses the default keystroke for column selection, plus a few extras.  These keystrokes will select the same column in the next or previous line, page, or until the beginning/end of the document.
+## Usage
+By default it uses the default keystroke for column selection, plus a few extras.  These keystrokes will select the same column in the next or previous line, page (the visible region of the file), or until the beginning/end of the file.
 
-Windows:
+Command | Mac | Windows | Linux
+------- | --- | ------- | -----
+Up | Ctrl + Shift + Up | Ctrl + Alt + Up | Alt + Shift + Up
+Down | Ctrl + Shift + Down | Ctrl + Alt + Down | Alt + Shift + Down
+Page Up | Ctrl + Shift + PageUp | Ctrl + Alt + PageUp | Alt + Shift + PageUp
+Page Down | Ctrl + Shift + PageDown | Ctrl + Alt + PageDown | Alt + Shift + PageDown
+Beginning of file | Ctrl + Shift + Home | Ctrl + Alt + Home | Alt + Shift + Home
+End of file | Ctrl + Shift + End | Ctrl + Alt + End | Alt + Shift + End
+Select to mouse cursor | Ctrl + Shift + Right-click | Ctrl + Alt + Right-click | Ctrl + Alt + Right-click
 
-- Ctrl-Alt-Up / Ctrl-Alt-Down: Up/down one line.
-- Ctrl-Alt-PageUp / Ctrl-Alt-PageDown: Up/down one page.
-- Ctrl-Alt-Home: Up until the beginning of the document.
-- Ctrl-Alt-End: Down until the end of the document.
-
-- Ctrl-Alt-Right-click: Select current column in all lines from the cursor to the row where you clicked.
-
-Linux:
-
-- Alt-Shift-Up / Ctrl-Alt-Down: Up/down one line.
-- Alt-Shift-PageUp / Ctrl-Alt-PageDown: Up/down one page.
-- Alt-Shift-Home: Up until the beginning of the document.
-- Alt-Shift-End: Down until the end of the document.
-
-- Ctrl-Alt-Right-click: Select current column in all lines from the cursor to the row where you clicked.
-
-OS X:
-
-- Ctrl-Shift-Up / Ctrl-Alt-Down: Up/down one line.
-- Ctrl-Shift-PageUp / Ctrl-Alt-PageDown: Up/down one page.
-- Ctrl-Shift-Home: Up until the beginning of the document.
-- Ctrl-Shift-End: Down until the end of the document.
-
-- Ctrl-Shift-Right-click: Select current column in all lines from the cursor to the row where you clicked.
-
+### Custom Keystrokes
 
 If you want to use a different keystroke, go to "Preferences" then "Key Bindings - User", and add an entry like this:
 
@@ -67,13 +55,6 @@ If you want to use a different keystroke, go to "Preferences" then "Key Bindings
 
 Do not include the trailing comma if it is the last entry.
 
-Using
------
-You should be able to place the character on any position on the line, and then use the keystrokes to add additional carets (cursors) to the next/previous lines.  It will skip over lines that are too short.
-
-It will behave differently if the cursor is at the end of the line.  In this case, it will select the end of every line.
-
-Contact
--------
+## Contact
 If you find a bug, or have suggestions, head over to the github page:
 https://github.com/ehuss/Sublime-Column-Select
